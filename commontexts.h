@@ -54,6 +54,7 @@ PGM_P(snshtm)="sns";
 PGM_P(parenguion)=")-";
 PGM_P(mayorparen)=">(";
 PGM_P(type)="type";
+PGM_P(aohtm)="ao";
 PGM_P(panelhtm)="p";
 PGM_P(sshtm)="ss";
 PGM_P(srlhtm)="srl";

@@ -20,6 +20,7 @@
   #define maxPrgSem 8     // número de programas semanales
   #define maxPrgFec 4     // número de programas fechas
   #define maxEsc 8        // número de escenas
+  #define maxAOR 8        // número de AND-OR
   #define maxwebcalls 4   // número máximo de web calls
   #define maxparam 14     // número máximo parámetros LCD
   #define maxpaneles 10   // número máximo de paneles
@@ -536,3 +537,23 @@
 #define mqttdashtopic 307
 #define tlink 308
 
+#define fileconf 0
+#define filezonas 1
+#define filedevrem 2
+#define filesalrem 3
+#define filewebcall 4
+#define fileurlwebcall 5
+#define filedescprg 6
+#define filedescesc 7
+#define filedescaor 8
+#define filemacdevrem 9
+#define fileunitsalrem 10
+#define filedesclocal 11
+#define filedescgpio 12
+#define filedesctemp 13
+#define filei2ctypes 14
+#define filecommon 15
+#define filespanish 16
+#define fileenglish 17
+#define filelog 18
+#define filedash 19

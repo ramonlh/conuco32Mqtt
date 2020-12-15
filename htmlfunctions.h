@@ -18,8 +18,8 @@ void ICACHE_FLASH_ATTR tcell(int ntexto) { printP(td,t(ntexto),td_f); }
 void ICACHE_FLASH_ATTR pt(int pos)
 {
   char auxlang[20]="";
-  if (conf.lang==0) strcpy(auxlang,filespanish);
-  if (conf.lang==1) strcpy(auxlang,fileenglish);
+  if (conf.lang==0) strcpy(auxlang,confiles[filespanish]);
+  if (conf.lang==1) strcpy(auxlang,confiles[fileenglish]);
   File auxfile=SPIFFS.open(auxlang,letrar);
   if (auxfile)
     {
@@ -37,7 +37,7 @@ void ICACHE_FLASH_ATTR pt(int pos)
 
 void ICACHE_FLASH_ATTR pc(int pos)
 {
-  File auxfile=SPIFFS.open(filecommon,letrar);
+  File auxfile=SPIFFS.open(confiles[filecommon],letrar);
   if (auxfile)
     {
     auxfile.seek(42*(pos-1), SeekSet);
@@ -299,7 +299,7 @@ void printTime()
 
 void ICACHE_FLASH_ATTR HtmlGetStateTime()
 {
-  printColspan(2);
+  printColspan(4);
   printTime();
   printP(b, c(PRG), b);
   printI(ESP.getFreeHeap());

@@ -22,13 +22,17 @@ void ICACHE_FLASH_ATTR filesHTML()
   else
     printP(t(faltafichero),crlf);
     printP(t(useftp),crlf);
+  for (byte i=0;i<17;i++)
+    {
+    if (filesexist[i]==0)
+      {
+      Serial.print("FALTA FICHERO: "); Serial.println(confiles[i]);
+      }
+    }
   printP(menor,table, b);
   printP(c(tclass), ig, tnormal, mayor);
   File dir = SPIFFS.open("/");
   File f=dir.openNextFile("r");
-//    File dir=SPIFFS.open(barra);
-//    File file=dir.openNextFile();
-//    if (testfiles) { while (file) { Serial.print(file.name()); Serial.print(b); Serial.println(file.size()); file=dir.openNextFile(); }}
   while (f)   {
     printP(tr, td, href_i, comillas, letrad, letraw);
     printP(interr, letraf, ig);

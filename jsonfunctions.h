@@ -116,19 +116,19 @@ void ICACHE_FLASH_ATTR buildJsonConf(boolean remoto, boolean sendpass, boolean r
   buildvalorF(letraL,letraO,letraN,-1,remoto?longitudtemp:conf.longitud,6,vacio,true);           // lon, longitud
   for (byte i=0; i<maxTemp; ++i) // TEMPERATURAS                                              //  temperaturas
     {
-    buildvalorC(letrat,letrad,vacio,i,remoto?readdescr(filedesctemp,i,20):readdescr(filedesclocal,i,20),vacio,true);  
+    buildvalorC(letrat,letrad,vacio,i,remoto?readdescr(confiles[filedesctemp],i,20):readdescr(confiles[filedesclocal],i,20),vacio,true);  
     buildvalorI(letrat,letram,vacio,i,getbit8(conf.mqttsalenable,i),vacio,true);  
     }
   for (byte i=0; i<maxED; ++i)    // ENTRADAS DIGITALES
     {
-    buildvalorC(letrae,letrad,vacio,i,remoto?readdescr(filedesctemp,i+8,20):readdescr(filedesclocal,i+8,20),vacio,true); // ed, descriptor
+    buildvalorC(letrae,letrad,vacio,i,remoto?readdescr(confiles[filedesctemp],i+8,20):readdescr(confiles[filedesclocal],i+8,20),vacio,true); // ed, descriptor
     buildvalorI(letrae,letrat,vacio,i,remoto?tipoEDtemp[i]:conf.tipoED[i],vacio,true);                                   // et, tipo
     buildvalorI(letrae,letraf,vacio,i,remoto?iftttpinEDtemp[i]:conf.iftttpinED[i],vacio,true);                          // ifen, IFTTT activo
     buildvalorI(letrae,letram,vacio,i,getbit8(conf.mqttsalenable,i+8),vacio,true);   
     }
   for (byte i=0; i<maxSD; ++i)    // SALIDAS DIGITALES
     {
-    buildvalorC(letras,letrad,vacio,i,remoto?readdescr(filedesctemp,i+12,20):readdescr(filedesclocal,i+12,20),vacio,true);  // sn, descriptor
+    buildvalorC(letras,letrad,vacio,i,remoto?readdescr(confiles[filedesctemp],i+12,20):readdescr(confiles[filedesclocal],i+12,20),vacio,true);  // sn, descriptor
     buildvalorI(letras,letrai,vacio,i,remoto?valinictemp[i]:conf.valinic[i],vacio,true);                                 // vin, valor inicial
     buildvalorL(letras,letrao,letran,i,remoto?tempdefacttemp[i]:conf.tempdefact[i],vacio,true);                           // onn, tiempo máximo ON
     buildvalorL(letras,letrao,letraf,i,remoto?tempdefdestemp[i]:conf.tempdefdes[i],vacio,true);                          // offn, tiempo máximo OFF
@@ -137,7 +137,7 @@ void ICACHE_FLASH_ATTR buildJsonConf(boolean remoto, boolean sendpass, boolean r
     }
   for (byte i=0; i<maxgpiovar; ++i)    // GPios 
     {
-    buildvalorC(letrag,letrad,vacio,i,readdescr(filedescgpio,i,20),vacio,true);       // sn, descriptor
+    buildvalorC(letrag,letrad,vacio,i,readdescr(confiles[filedescgpio],i,20),vacio,true);       // sn, descriptor
     buildvalorI(letrag,letrat,vacio,i,conf.gpiosensortype[i],vacio,true);            // tipo gpio
     buildvalorI(letrag,letram,vacio,i,getbit8(conf.mqttsalenable,i+20),vacio,true);  // mqtt enable
     buildvalorF(letrag,letraa,vacio,i,conf.gpioalfa[i],5,vacio,true);               // gpio alfa

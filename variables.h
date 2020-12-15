@@ -39,7 +39,7 @@ typedef struct {    // datos configuración
                 unsigned long contadores[maxED]={0,0,0,0};  // 16 bytes, número de veces encendido/apagado de entradas digitales
                 byte actPrg[maxPrg]={0,0};        // 2 bytes, programas activos: 0/1
                 int webPort=portdefault;          // 2 bytes, puerto servidor web
-                byte LIBRE2[10][5];               // 50 bytes, LIBRES
+                byte LIBRE2[50];                  // 50 bytes, LIBRES
                 /********** variables wifi *************/
                 byte wifimode=1;                  // 1 byte, 0:STA, 1: AP (default), 2: AP+STA
                 char ssidSTA[20]="SSID_AP";       // 20 bytes, SSID en modo STA
@@ -55,8 +55,8 @@ typedef struct {    // datos configuración
                 byte prghor[maxPrgSem]={0,0,0,0}; // 4 bytes, hora
                 byte prgmin[maxPrgSem]={0,0,0,0}; // 4 bytes, minuto
                 byte bshowEsc[1]={0};             // 1 byte, por bits, uno para escena
-                byte bescena[maxEsc][5];          // 2 x 5 = 10 bytes, definición de escenas, conjuntamente con bescenaact
-                byte bescenaact[maxEsc][5];       // 2 x 5 = 10 bytes, activación de escenas  (valor >0, ni ON ni OFF), conjuntamente con bescena
+                byte bescena[maxEsc][5];          // 8 x 5 = 40 bytes, definición de escenas, conjuntamente con bescenaact
+                byte bescenaact[maxEsc][5];       // 8 x 5 = 40 bytes, activación de escenas  (valor >0, ni ON ni OFF), conjuntamente con bescena
                 byte bactfec[1]={0};              // 1 byte, por bits, uno por programa
                 byte fecsal[maxPrgFec]={0,0,0,0}; // 4 bytes, salida a actuar en cada programación por fechas
                 byte mqttsalenable[4]={0};        // publicar mqtt para cada señal.(8+4+8+10)
@@ -111,7 +111,7 @@ typedef struct {    // datos configuración
                 byte netseg=1;                    // 1 byte, segmento de red=EEip[2]
                 float setpoint[maxTemp]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};  // setpoint temperaturas
                 byte salsetpoint[maxTemp]={0,0,0,0,0,0,0,0};      // salida asociada al setpoint (0,1 salidas locales; 2-17 salidas remotas)
-                byte accsetpoint[maxTemp]={2,2,2,2,2,2,2,2};      // acción asociada al setpoint (1=OFF,2=ON,0=ninguna)
+                byte accsetpoint[maxTemp]={2,2,2,2,2,2,2,2};      // acción asociada al setpoint (0=OFF,1=ON,2=ninguna)
                 
                 byte MbC8[2]={0,0};               // byte 1 para SD, byte 2 para ED
                 byte ftpenable=1;                 // 0=disnable, 1=enable
@@ -186,7 +186,16 @@ typedef struct {    // datos configuración
                 byte APP=0;   // Modo apoyo
                 byte evenbaseA[nEVE]={0,0,0,0,0,0,0,0};  // 8, valor de base de comparación
                 byte LIBRE6[maxpaneles][2]; // 20 bytes, tabla para asignar señales a paneles
-                byte LIBRE7[1800];    // LIBRES para reserva
+                byte baorenable[1]={0};             // 1 byte, por bits, uno para and/or
+                byte baor[maxAOR][5];          // 8 x 5 = 40 bytes, definición de and/or, conjuntamente con baoract
+                byte aoracc[maxAOR];       // 8= 8 bytes, accion de and/or (0:OFF, 1:ON)
+                byte LIBRE7[32];
+                byte baortipo[maxAOR]={0,0,0,0,0,0,0,0};     // 8 bytes, 0:Nada, 1:OFF, 2:ON
+                byte aorsal[maxAOR]={0,0,0,0,0,0,0,0};       // 8 bytes define la señal sobre la que se actua
+                byte aorcond[maxAOR][40];            // 320 bytes, condiciones para cada comb. 0:-,1:OFF,2:ON
+                unsigned long timeon[maxSD]={0,0,0,0,0,0,0,0};    // 4x8=32 bytes
+                byte LIBRE8[1447];           // LIBRES para reserva
+                unsigned long HUELLA=12345678;  // verifica que el conf.txt se ha leído bien
                } conftype;
     conftype conf;     
     byte *buffconf = (byte *) &conf; // acceder a conf como bytes
@@ -288,12 +297,12 @@ float offsetAtemp[maxEA]={0.0,0.0}; // 1x4 offset conversión analógicas locale
 
 byte MbC8ant[2]={0,0};           // estado anterior de SD y ED: 0:SD0, 1:SD1, 2:ED0, 3:ED1
 byte MbC8antgpio[4]={0,0,0,0};   // estado anterior de gpios configurables
-int MbR[8]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};      // 0-7 Temperaturas locales
-int MbRant[10]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};   // 0-7 Temperaturas locales
+int MbR[8]={0,0,0,0,0,0,0,0};      // 0-7 Temperaturas locales
+int MbRant[10]={0,0,0,0,0,0,0,0};   // 0-7 Temperaturas locales
 float MbRgpio[10]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};      // 0-9 Analógicas/temperaturas gpio
 float sumMbRgpio[10]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};   // valor medio de lecturas entre presentación 0-9 Analógicas gpio
 int avrcount[10]={0,0,0,0,0,0,0,0,0,0};                           // número de lecturas para la media
-long MbRantgpio[10]={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};    // 0-9 Analógicas gpio anteriores
+long MbRantgpio[10]={0,0,0,0,0,0,0,0,0,0};    // 0-9 Analógicas gpio anteriores
 byte iftttchange[4]={0,0,0,0};         // 0-7: salidas digitales,  8-11: entradas digitales,  16-31 Gpios como ED/SD
 boolean onescenaact=false;
 byte secori=0;
@@ -323,6 +332,7 @@ byte posactsalrem=0;
 byte posacteve=0;
 byte posactfec=0;
 byte posactesc=0;
+byte posactaor=0;
 char iottweetusertemp[10];          //IoTtweet account user ID (6 digits, included zero pre-fix)
 char iottweetkeytemp[15];           //IoTtweet account user ID (6 digits, included zero pre-fix)
 byte iottweetenabletemp=0;
@@ -347,15 +357,42 @@ boolean tfton=true;
 
 char admin[]="admin";
 
+/**#define fileconf 0
+#define filezonas 1
+#define filedevrem 2
+#define filesalrem 3
+#define filewebcall 4
+#define fileurlwebcall 5
+#define filedescprg 6
+#define filedescesc 7
+#define filedescaor 8
+#define filemacdevrem 9
+#define fileunitsalrem 10
+#define filedesclocal 11
+#define filedescgpio 12
+#define filedesctemp 13
+#define filei2ctypes 14
+#define filecommon 15
+#define filespanish 16
+#define fileenglish 17
+#define filelog 18
+#define filedash 19**/
+
+char confiles[20][20]={"/conf.txt","/zonas.txt","/devrem.txt","/salrem.txt","/webcall.txt",
+                       "/urlwebcall.txt","/descprg.txt","/descesc.txt","/descaor.txt","/macdevrem.txt",
+                       "/unitsalrem.txt","/desclocal.txt","/descgpio.txt","/desctemp.txt","/i2ctypes.txt",
+                       "/common.txt","/spanish.txt","/english.txt","/log.txt","/dash.txt"};
 boolean filesok=false;
-char fileconf[]="/conf.txt";
-char filezonas[]="/zonas.txt";
+
+//char fileconf[]="/conf.txt";
+/**char filezonas[]="/zonas.txt";
 char filedevrem[]="/devrem.txt";
 char filesalrem[]="/salrem.txt";
 char filewebcall[]="/webcall.txt";
 char fileurlwebcall[]="/urlwebcall.txt";
 char filedescprg[]="/descprg.txt";
 char filedescesc[]="/descesc.txt";
+char filedescaor[]="/descaor.txt";
 char filemacdevrem[]="/macdevrem.txt";
 char fileunitsalrem[]="/unitsalrem.txt";
 char filedesclocal[]="/desclocal.txt";
@@ -366,7 +403,7 @@ char filecommon[]="/common.txt";
 char filespanish[]="/spanish.txt";
 char fileenglish[]="/english.txt";
 char filelog[]="/log.txt";
-char filedash[]="/dash.txt";
+char filedash[]="/dash.txt";**/
 char flecha[4][3]={"<","<<",">>",">"};
 byte tftpage=0;
 byte tftapactual=0;
@@ -408,3 +445,4 @@ byte tipoalarma2=9;   // alarma reconocida
 byte estalarma[10]={0,0,0,0,0,0,0,0,0,0};   // 0:estado inicial, 1:pendiente reconocer, 2:reconocida
 char textalarma[10][10]={"Ai1","Ai2","Ai3","Ai4","BP","HP","AH2","AH4","AB4","None"};
 
+byte filesexist[17]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};

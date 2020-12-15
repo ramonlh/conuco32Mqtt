@@ -38,8 +38,8 @@ char* ICACHE_FLASH_ATTR readdescr(char* namefile, byte ind, byte len)
 char* ICACHE_FLASH_ATTR t(int pos)
 {
   char auxlang[20]="";
-  if (conf.lang==0) strcpy(auxlang,filespanish);
-  if (conf.lang==1) strcpy(auxlang,fileenglish);
+  if (conf.lang==0) strcpy(auxlang,confiles[filespanish]);
+  if (conf.lang==1) strcpy(auxlang,confiles[fileenglish]);
   File auxfile=SPIFFS.open(auxlang,letrar);
   if (auxfile)
     {
@@ -56,7 +56,7 @@ char* ICACHE_FLASH_ATTR t(int pos)
 
 char* ICACHE_FLASH_ATTR c(int pos)
 {
-  File auxfile=SPIFFS.open(filecommon,letrar);
+  File auxfile=SPIFFS.open(confiles[filecommon],letrar);
   if (auxfile)
     {
     auxfile.seek(42*(pos-1), SeekSet);
@@ -159,17 +159,20 @@ int ICACHE_FLASH_ATTR posrem(int numrem)  {
 
 int ICACHE_FLASH_ATTR readconf()
 {
-  File auxfile=SPIFFS.open(fileconf,letrar);
+  File auxfile=SPIFFS.open(confiles[fileconf],letrar);
   if (!auxfile) return 0;
   int count=0;
   for (count=0;count<sizeof(conf);count++)*(buffconf+count)=auxfile.read();
   auxfile.close();
+  if (conf.HUELLA!=12345678)
+    Serial.println("HUELLA INCORRECTA");
   return count;
 }
 
 void ICACHE_FLASH_ATTR saveconf()
 {
-  File auxfile=SPIFFS.open(fileconf, rmas);
+  conf.HUELLA=12345678;
+  File auxfile=SPIFFS.open(confiles[fileconf], rmas);
   if (auxfile) { auxfile.write(buffconf,sizeof(conf)); auxfile.close();  }
 }
 
@@ -204,28 +207,32 @@ int callhttpGET(char *host, int port, boolean readresp, unsigned long timeout)
   return httpCode;
 }
 
-boolean checkfile(char* namefile)
-{  if (!SPIFFS.exists(namefile)) { Serial.print(namefile); Serial.println(" no existe"); return false; }  return true; }
+boolean checkfile(byte numfile)
+{  if (!SPIFFS.exists(confiles[numfile])) 
+  { filesexist[numfile]=0; Serial.print(confiles[numfile]); Serial.println(" no existe"); return false; }  return true; 
+}
 
 boolean checkfiles()
 {
   boolean auxB=true;
-  auxB=auxB && checkfile(fileconf); 
-  auxB=auxB && checkfile(filezonas);
-  auxB=auxB && checkfile(filedevrem);
-  auxB=auxB && checkfile(filesalrem); 
-  auxB=auxB && checkfile(filewebcall); 
-  auxB=auxB && checkfile(fileurlwebcall); 
-  auxB=auxB && checkfile(filedescprg); 
-  auxB=auxB && checkfile(filedescesc); 
-  auxB=auxB && checkfile(filemacdevrem);   
-  auxB=auxB && checkfile(fileunitsalrem); 
-  auxB=auxB && checkfile(filedesclocal); 
-  auxB=auxB && checkfile(filedesctemp); 
-  auxB=auxB && checkfile(filei2ctypes); 
-  auxB=auxB && checkfile(filecommon); 
-  auxB=auxB && checkfile(filespanish); 
-  auxB=auxB && checkfile(fileenglish); 
+  auxB=auxB && checkfile(0); 
+  auxB=auxB && checkfile(1);
+  auxB=auxB && checkfile(2);
+  auxB=auxB && checkfile(3); 
+  auxB=auxB && checkfile(4); 
+  auxB=auxB && checkfile(5); 
+  auxB=auxB && checkfile(6); 
+  auxB=auxB && checkfile(7); 
+  auxB=auxB && checkfile(8); 
+  auxB=auxB && checkfile(9);   
+  auxB=auxB && checkfile(10); 
+  auxB=auxB && checkfile(11); 
+  auxB=auxB && checkfile(12); 
+  auxB=auxB && checkfile(13); 
+  auxB=auxB && checkfile(14); 
+  auxB=auxB && checkfile(15); 
+  auxB=auxB && checkfile(16); 
+  auxB=auxB && checkfile(17); 
   filesok=auxB;
   return auxB;
 }
@@ -339,7 +346,7 @@ void ICACHE_FLASH_ATTR writeMenu(byte opcprin, byte opcsec)
       {
       for (byte i=0; i<maxpaneles; i++)
         if (getbit8(conf.bshowpanel, i))
-          printOpc(false, opcsec==i, readdescr(filezonas, i, 20), panelhtm, i);
+          printOpc(false, opcsec==i, readdescr(confiles[filezonas], i, 20), panelhtm, i);
       }
     }
   else if (opcprin==2) // PROGRAMACIÓN
@@ -347,6 +354,7 @@ void ICACHE_FLASH_ATTR writeMenu(byte opcprin, byte opcsec)
     if (conf.modofi==0) printOpc(false, opcsec==5, t(programas), sprghtm);
     if (conf.modofi==0) printOpc(false, opcsec==1, t(semanal), ssehtm);
     if (conf.modofi==0) printOpc(false, opcsec==2, t(condiciones), svhtm);
+    if (conf.modofi==0) printOpc(false, opcsec==6, "Combinaciones", aohtm);  
     if (conf.modofi==0) printOpc(false, opcsec==3, t(fecha), sfhtm);
     if (conf.modofi==0) printOpc(false, opcsec==4, t(escenas), seschtm);
     if (conf.modofi==0) printOpc(false, opcsec==7, t(webcalls), swchtm);

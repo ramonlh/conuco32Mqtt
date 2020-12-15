@@ -2,7 +2,7 @@
 
 #define CONUCO           // usado para pinout PCB
 #define PCBV5            // versión de PCB
-#define versinst 2053    // versión Firmware 
+#define versinst 2055    // versión Firmware
 boolean INITFAB=false;     // si true, se resetea a fábrica, si false no se hace nada
 boolean MARKTIME=false;
 
@@ -38,6 +38,7 @@ boolean MARKTIME=false;
 #include <WiFiUdp.h>
 #include <NTPClient.h>                // Local
 #include <RemoteDebug.h>
+#include "VirtuinoCM.h"
 //#include <uMQTTBroker.h>
 
 //#include <ResponsiveAnalogRead.h>
@@ -56,6 +57,7 @@ Thermistor *thermistor;
 
 FtpServer ftpSrv;   //set #define FTP_DEBUG in ESP8266FtpServer.h to see ftp verbose on serial
 WebServer server(conf.webPort);
+//WiFiServer VirtServer(8000);
 IoTtweetESP32 myiot;       //naming your devices
 RCSwitch mySwitch = RCSwitch();
 DHTesp dht[maxDHT];
@@ -83,6 +85,10 @@ TFT_eSPI_Button btKEY[10];          // botones números
 TFT_eSPI_Button btBC[16];           // botones bomba de calor
 TFT_eSPI_Button btDEM[3];        // botones demanda para prueba
 RemoteDebug Debug;
+VirtuinoCM virtuino;               
+#define V_memory_count 32          // the size of V memory. You can change it to a number <=255)
+float V[V_memory_count];           // This array is synchronized with Virtuino V memory. You can change the type to int, long etc.
+
 
 #include "basicfunctions.h"            // include
 #include "ajaxcode.h"                  // include
@@ -280,10 +286,12 @@ void ICACHE_FLASH_ATTR setup(void) {
   initFTP(); marktime("initFTP");
   initHTML(); marktime("initHTML");
   initWebserver(); marktime("initWebserver");
+  //VirtServer.begin();
   initPubSub();
   initDebug(); marktime("initDebug");
   internetON=(checkInternet()==200); marktime("checkInternet");
   Serial.println(internetON?"Internet OK":"NO Internet");
+  //internetON=true;
   if (internetON)
     {
     initTime(); marktime("initTime");
@@ -313,6 +321,7 @@ void ICACHE_FLASH_ATTR setup(void) {
     }
   for (byte i=0;i<maxsalrem;i++) lasttimeremote[i]=(millis()/1000);
   MARKTIME=false;                   
+  mact1=0; mact2=0;mact10=0;mact60=0;mact3600=0;mact86400=0;
   Serial.println("END SETUP");  Serial.println("----------------------------");
   Serial.println("Type 'help' to help");  Serial.println("----------------------------");
 }
@@ -641,20 +650,20 @@ void testChange() {
 		for(byte i=0; i<maxSD; i++) {
 			if(getbit8(iftttchange,i)==1) {   // SD i
 				if((getbit8(conf.iftttpinSD,i)==1) && (getbit8(conf.MbC8,i)==1))
-				{ ifttttrigger(conucochar, conf.iftttkey, conf.aliasdevice, readdescr(filedesclocal,i+14,20), textonoff(1)); }
+				{ ifttttrigger(conucochar, conf.iftttkey, conf.aliasdevice, readdescr(confiles[filedesclocal],i+14,20), textonoff(1)); }
 
 				if((getbit8(conf.iftttpinSD,i+8)==1) && (getbit8(conf.MbC8,i)==0))
-				{ ifttttrigger(conucochar, conf.iftttkey, conf.aliasdevice, readdescr(filedesclocal,i+14,20), textonoff(0)); }
+				{ ifttttrigger(conucochar, conf.iftttkey, conf.aliasdevice, readdescr(confiles[filedesclocal],i+14,20), textonoff(0)); }
 			}
 		}
 
 		for(byte i=0; i<maxED; i++) {
 			if(getbit8(iftttchange,i+8)==1) {    // ED i
 				if((getbit8(conf.iftttpinED,i)==1) && (getbit8(conf.MbC8,i+8)==1))      // en ON
-				{ ifttttrigger(conucochar, conf.iftttkey, conf.aliasdevice, readdescr(filedesclocal,i+10,20), textonoff(1)); }
+				{ ifttttrigger(conucochar, conf.iftttkey, conf.aliasdevice, readdescr(confiles[filedesclocal],i+10,20), textonoff(1)); }
 
 				if((getbit8(conf.iftttpinED,i+8)==1) && (getbit8(conf.MbC8,i+8)==0))      // en OFF
-				{ ifttttrigger(conucochar, conf.iftttkey, conf.aliasdevice, readdescr(filedesclocal,i+10,20), textonoff(0)); }
+				{ ifttttrigger(conucochar, conf.iftttkey, conf.aliasdevice, readdescr(confiles[filedesclocal],i+10,20), textonoff(0)); }
 			}
 		}
 
@@ -780,8 +789,10 @@ void taskvar() {
 }
 
 void task60() {   // 60 segundos
-  Serial.println("task60");
-	tini = millis();
+  tini = millis();
+  for (byte i=0;i<maxSD;i++) { conf.timeon[i]=conf.timeon[i]+getbit8(conf.MbC8,i); }
+  Serial.print("timeon:");
+  saveconf();
   internetON=(checkInternet()==200); marktime("checkInternet");
   Serial.print("Internet:"); Serial.println(internetON?"ON":"OFF");
 	memset(bevenENABLE, sizeof(bevenENABLE),0);
@@ -844,6 +855,58 @@ long lastMsg = 0;
 char msgx[50];
 int value = 0;
 
+//============================================================== onCommandReceived
+//==============================================================
+/* This function is called every time Virtuino app sends a request to server to change a Pin value
+ * The 'variableType' can be a character like V, T, O  V=Virtual pin  T=Text Pin O=PWM Pin 
+ * The 'variableIndex' is the pin number index of Virtuino app
+ * The 'valueAsText' is the value that has sent from the app   */
+ void onReceived(char variableType, uint8_t variableIndex, String valueAsText){     
+    if (variableType=='V'){
+        float value = valueAsText.toFloat();        // convert the value to float. The valueAsText have to be numerical
+        if (variableIndex<V_memory_count) V[variableIndex]=value; // copy the received value to arduino V memory array
+    }
+}
+
+//==============================================================
+/* This function is called every time Virtuino app requests to read a pin value*/
+String onRequested(char variableType, uint8_t variableIndex){     
+    if (variableType=='V') {
+    if (variableIndex<V_memory_count) return  String(V[variableIndex]);   // return the value of the arduino V memory array
+  }
+  return "";
+}
+
+ //==============================================================
+/**  void virtuinoRun(){
+  WiFiClient client = VirtServer.available();
+   if (!client) return;
+   // if (debug) Serial.println("Connected");
+   unsigned long timeout = millis() + 3000;
+   while (!client.available() && millis() < timeout) delay(1);
+   if (millis() > timeout) {
+    Serial.println("timeout");
+    client.flush();
+    client.stop();
+    return;
+  }
+    virtuino.readBuffer="";    // clear Virtuino input buffer. The inputBuffer stores the incoming characters
+      while (client.available()>0) {        
+        char c = client.read();         // read the incoming data
+        virtuino.readBuffer+=c;         // add the incoming character to Virtuino input buffer
+//        if (debug) Serial.write(c);
+      }
+     client.flush();
+//     if (debug) Serial.println("\nReceived data: "+virtuino.readBuffer);
+     String* response= virtuino.getResponse();    // get the text that has to be sent to Virtuino as reply. The library will check the inptuBuffer and it will create the response text
+//     if (debug) Serial.println("Response : "+*response);
+     client.print(*response);
+     client.flush();
+     delay(10);
+     client.stop(); 
+//    if (debug) Serial.println("Disconnected");
+}**/
+
 void loop(void) 
 {
 	tini=millis();
@@ -853,12 +916,13 @@ void loop(void)
   handleWebclient();  debugV("handleWebclient"); marktime("handleWebclient");
 	leevaloresDIG();    debugV("leevaloresDIG"); marktime("leevaloresDIG");
 	handletfttouch();   debugV("handletfttouch"); marktime("handletfttouch");
+  //virtuinoRun();        // Necessary function to communicate with Virtuino. Client handler
   Debug.handle();     debugV("Debug.handle"); marktime("Debug.handle");
 	//handleRF();
 	//////////////////////////////////////////////////////////////////////////////////////////
 	if((millis() > (mact1 + 1000))) { task1(); marktime("task1"); }                         // tareas que se hacen cada segundo
 	if((millis() > (mact10 + (conf.peractrem * 1000)))) { taskvar(); marktime("taskvar");}   // tareas que se hacen cada "peractrem" segundos
-	if((millis() > (mact60 + 60000))) { task60; marktime("task60");}    // tareas que se hacen cada 60 segundos:1 minuto
+	if((millis() > (mact60 + 60000))) { task60(); marktime("task60");}    // tareas que se hacen cada 60 segundos:1 minuto
 	if((millis() > (mact3600 + 3600000))) { task3600(); }    // tareas que se hacen cada 3600 segundos:1 hora
 	if((millis() > (mact86400 + 86400000))) {   // tareas que se hacen cada 86400 segundos: 1 día
 		tini = millis();

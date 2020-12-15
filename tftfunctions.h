@@ -178,7 +178,7 @@ void drawTE()   // temperaturas
   for (byte i=0;i<4;i++)
       {
       tft.setTextColor(TFT_WHITE, TFT_BLACK); tft.setTextSize(2);
-      tft.drawString(readdescr(filedesclocal,i,20),0,50*i+15);
+      tft.drawString(readdescr(confiles[filedesclocal],i,20),0,50*i+15);
       dtostrf(MbR[i]*0.01,4,1,auxdesc);
       btTE[i].initButtonUL(&tft,100,50*i,58,40,2,TFT_WHITE,TFT_BLACK,auxdesc,2);
       btTE[i].drawButton();
@@ -186,7 +186,7 @@ void drawTE()   // temperaturas
   for (byte i=4;i<maxTemp;i++)
       {
       tft.setTextColor(TFT_WHITE, TFT_BLACK); tft.setTextSize(2);
-      tft.drawString(readdescr(filedesclocal,i,20),165,50*(i-4)+15);
+      tft.drawString(readdescr(confiles[filedesclocal],i,20),165,50*(i-4)+15);
       dtostrf(MbR[i]*0.01,4,1,auxdesc);
       btTE[i].initButtonUL(&tft,265,50*(i-4),58,40,2,TFT_WHITE,TFT_BLACK,auxdesc,2);
       btTE[i].drawButton();
@@ -220,7 +220,7 @@ void drawED()   // entradas digitales
   if (conf.TFTenabled==0) return;
   for (byte i=0;i<4;i++)
     {
-    btED[i].initButtonUL(&tft,0,50*i,158,40,2,getbit8(conf.MbC8,i+8)==1?TFT_YELLOW:TFT_WHITE,TFT_BLACK,readdescr(filedesclocal,i+8,20),2);
+    btED[i].initButtonUL(&tft,0,50*i,158,40,2,getbit8(conf.MbC8,i+8)==1?TFT_YELLOW:TFT_WHITE,TFT_BLACK,readdescr(confiles[filedesclocal],i+8,20),2);
     btED[i].drawButton();
     tft.setTextColor(TFT_WHITE, TFT_BLACK);  tft.setTextSize(2);
     tft.drawString("      ", 180,50*i+10);
@@ -233,12 +233,12 @@ void drawSD()   // salidas digitales
   if (conf.TFTenabled==0) return;
   for (byte i=0;i<4;i++)
     {
-    btSD[i].initButtonUL(&tft,0,50*i,158,40,2,getbit8(conf.MbC8,i)==1?TFT_YELLOW:TFT_WHITE,TFT_BLACK,readdescr(filedesclocal,i+12,20),2);
+    btSD[i].initButtonUL(&tft,0,50*i,158,40,2,getbit8(conf.MbC8,i)==1?TFT_YELLOW:TFT_WHITE,TFT_BLACK,readdescr(confiles[filedesclocal],i+12,20),2);
     btSD[i].drawButton();
     }
   for (byte i=4;i<maxSD;i++)
     {
-    btSD[i].initButtonUL(&tft,160,50*(i-4),158,40,2,getbit8(conf.MbC8,i)==1?TFT_YELLOW:TFT_WHITE,TFT_BLACK,readdescr(filedesclocal,i+12,20),2);
+    btSD[i].initButtonUL(&tft,160,50*(i-4),158,40,2,getbit8(conf.MbC8,i)==1?TFT_YELLOW:TFT_WHITE,TFT_BLACK,readdescr(confiles[filedesclocal],i+12,20),2);
     btSD[i].drawButton();
     }
 }
@@ -420,7 +420,7 @@ void drawGPIOs()   // GPIOS variables
     if (gpiovis(i))
       {
       int posy=34*j+5;
-      strcpy(auxdesc,readdescr(filedescgpio,i,20)); 
+      strcpy(auxdesc,readdescr(confiles[filedescgpio],i,20)); 
       if (conf.gpiosensortype[i]==0)     // INPUT
         {
         btGPIO[i].initButtonUL(&tft,0,34*j,180,33,2,getbit8(conf.MbC8gpio,i+16)==1?TFT_YELLOW:TFT_WHITE,TFT_BLACK,auxdesc,2);
